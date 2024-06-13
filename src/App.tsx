@@ -1,7 +1,8 @@
 import { TLComponents, TLUiAssetUrlOverrides, Tldraw } from "tldraw";
 import snapshot from "./snapshot.json";
-import { overrides } from "./overrides";
-import { FuzzyCursorBox, CustomToolbar } from "./Navigation/FuzzyCursor";
+import { CustomToolbar, overrides } from "./overrides";
+import { FuzzyCursorBox } from "./Navigation/FuzzyCursorBox";
+import { FuzzyCursorTool } from "./Navigation/FuzzyCursorTool/FuzzyCursorTool";
 
 export const customTools = [FuzzyCursorTool];
 

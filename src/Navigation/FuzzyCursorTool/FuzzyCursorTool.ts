@@ -1,16 +1,27 @@
-import { StateNode, TLInterruptEvent, TLCancelEvent } from "tldraw";
+import {
+  StateNode,
+  TLInterruptEvent,
+  TLCancelEvent,
+  TLShape,
+  Box,
+  atom,
+  Atom,
+} from "tldraw";
+import { getNodes } from "../useNavigation";
 
 export class FuzzyCursorTool extends StateNode {
   // [1]
   static override id = "fuzzy-cursor";
-  static override initial = "idle";
-  static override children = () => [];
+
+  nodes: TLShape[] = [];
+  focusedNode: Atom<TLShape[] | []> = atom("fuzzy cursor brush", []);
 
   // [2]
   override onEnter = () => {
     this.editor.setCursor({ type: "none", rotation: 0 });
+    this.nodes = getNodes(this.editor);
+    this.focusedNode.set([this.nodes[1]]);
   };
-
   override onExit = () => {
     this.editor.setCursor({ type: "default", rotation: 0 });
   };
@@ -26,5 +37,6 @@ export class FuzzyCursorTool extends StateNode {
 
   private complete() {
     this.parent.transition("select", {});
+    this.nodes = [];
   }
 }
