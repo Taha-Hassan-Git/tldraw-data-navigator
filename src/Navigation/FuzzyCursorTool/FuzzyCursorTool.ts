@@ -11,6 +11,11 @@ import {
 } from "tldraw";
 import { getNodes } from "../useNavigation";
 
+const animationOptions = {
+  duration: 500,
+  easing: EASINGS.easeInOutCubic,
+  inset: 0,
+};
 export class FuzzyCursorTool extends StateNode {
   // [1]
   static override id = "fuzzy-cursor";
@@ -42,10 +47,8 @@ export class FuzzyCursorTool extends StateNode {
       case "ArrowLeft": {
         let prevIndex = currentIndex - 1;
         if (prevIndex == -1) {
-          console.log("hell0");
           prevIndex = this.nodes.length - 1;
         }
-        console.log({ currentIndex, prevIndex });
         this.focusedNode.set(this.nodes[prevIndex]);
         this.moveCameraIfNeeded();
         break;
@@ -53,11 +56,7 @@ export class FuzzyCursorTool extends StateNode {
       case "Enter": {
         const bounds = this.editor.getShapePageBounds(this.focusedNode.get());
         if (!bounds) return;
-        this.editor.zoomToBounds(bounds, {
-          duration: 500,
-          easing: EASINGS.easeInOutCubic,
-          inset: 0,
-        });
+        this.editor.zoomToBounds(bounds, animationOptions);
       }
     }
   };
@@ -68,8 +67,14 @@ export class FuzzyCursorTool extends StateNode {
     const viewportPageBounds = this.editor.getViewportPageBounds();
     if (!nodeBounds || !viewportPageBounds) return;
     if (viewportPageBounds.contains(nodeBounds)) return;
+    // Does the shape fit in the viewport? If not animate to shape
+    if (
+      nodeBounds.h > viewportPageBounds.h ||
+      nodeBounds.w > viewportPageBounds.w
+    ) {
+      return this.editor.animateToShape(node.id, animationOptions);
+    }
     // pan the minimum amount needed to put the shape in bounds
-    console.log("need to move camera");
     let deltaX = 0;
     let deltaY = 0;
     const zoomLevel = this.editor.getZoomLevel();
@@ -86,7 +91,6 @@ export class FuzzyCursorTool extends StateNode {
       viewportPageBounds.x + viewportPageBounds.w
     ) {
       //right
-      console.log("hi");
       deltaX =
         (viewportPageBounds.x +
           viewportPageBounds.w -
@@ -110,7 +114,8 @@ export class FuzzyCursorTool extends StateNode {
           PADDING) *
         zoomLevel;
     }
-    this.editor.pan(new Vec(deltaX, deltaY));
+    console.log({ deltaX, deltaY });
+    this.editor.pan(new Vec(deltaX, deltaY), animationOptions);
   }
 
   override onInterrupt: TLInterruptEvent = () => {
