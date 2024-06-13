@@ -3,11 +3,9 @@ import {
   DefaultToolbarContent,
   TLUiOverrides,
   TldrawUiMenuItem,
-  computed,
   useIsToolSelected,
   useTools,
 } from "tldraw";
-import { getNodes, $currentNode, moveToNode } from "./Navigation/useNavigation";
 
 export const overrides: TLUiOverrides = {
   tools: (editor, tools) => {

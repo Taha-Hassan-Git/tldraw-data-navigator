@@ -21,6 +21,7 @@ function App() {
   return (
     <div style={{ position: "fixed", inset: 0 }}>
       <Tldraw
+        // @ts-expect-error jjk
         snapshot={snapshot}
         overrides={overrides}
         components={customComponents}

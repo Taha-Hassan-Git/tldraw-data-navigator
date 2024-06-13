@@ -10,7 +10,7 @@ export const FuzzyCursorBox = track(function FuzzyCursorBox() {
     if (editor.getPath() !== "fuzzy-cursor") return null;
 
     const fuzzyCursorTool = editor.getCurrentTool() as FuzzyCursorTool;
-    const node = fuzzyCursorTool.focusedNode.get()[0] as TLFrameShape;
+    const node = fuzzyCursorTool.focusedNode.get() as TLFrameShape;
     const bounds = editor.getShapePageBounds(node);
     if (!bounds) return null;
     const zoomLevel = editor.getZoomLevel();
@@ -21,6 +21,7 @@ export const FuzzyCursorBox = track(function FuzzyCursorBox() {
   const fuzzyCursorBrush = getFuzzyCursorBrush();
   if (!fuzzyCursorBrush) return null;
   const PADDING = 16;
+
   return (
     <div
       style={{
@@ -35,7 +36,14 @@ export const FuzzyCursorBox = track(function FuzzyCursorBox() {
         border: "1px solid var(--color-text-0)",
         backgroundColor: "rgba(25,120,250,0.05)",
         zIndex: 999,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        color: "red",
+        // transition: "0.1s ease-in-out",
       }}
-    />
+    >
+      <p>x</p>
+    </div>
   );
 });
