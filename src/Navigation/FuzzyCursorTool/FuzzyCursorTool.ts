@@ -20,7 +20,17 @@ export class FuzzyCursorTool extends StateNode {
 
   override onEnter = () => {
     this.nodes = getNodes(this.editor);
-    this.focusedNode.set(this.nodes[0]);
+    // calculate the node that is closest to the center of the viewport
+    const viewportCenter = this.editor.getViewportPageCenter();
+    const distances = this.nodes
+      .map((node, i) => {
+        const bounds = this.editor.getShapePageBounds(node)!;
+        const point = bounds.center;
+        return { index: i, distance: point.dist(viewportCenter) };
+      })
+      .sort((a, b) => a.distance - b.distance);
+
+    this.focusedNode.set(this.nodes[distances[0].index]);
     this.moveCameraIfNeeded();
   };
   override onExit = () => {
