@@ -21,8 +21,7 @@ function App() {
   return (
     <div style={{ position: "fixed", inset: 0 }}>
       <Tldraw
-        // @ts-expect-error jjk
-        snapshot={snapshot}
+        persistenceKey="kbd-navigation"
         overrides={overrides}
         components={customComponents}
         assetUrls={customAssetUrls}
