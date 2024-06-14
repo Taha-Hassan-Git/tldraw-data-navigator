@@ -6,16 +6,11 @@ import {
   Atom,
   TLEventHandlers,
   TLShape,
-  EASINGS,
   Vec,
+  Box,
 } from "tldraw";
-import { getNodes } from "../useNavigation";
+import { animationOptions, getNodes } from "../useNavigation";
 
-const animationOptions = {
-  duration: 500,
-  easing: EASINGS.easeInOutCubic,
-  inset: 0,
-};
 export class FuzzyCursorTool extends StateNode {
   // [1]
   static override id = "fuzzy-cursor";
@@ -65,57 +60,66 @@ export class FuzzyCursorTool extends StateNode {
     const node = this.focusedNode.get();
     const nodeBounds = this.editor.getShapePageBounds(node);
     const viewportPageBounds = this.editor.getViewportPageBounds();
+    const zoomLevel = this.editor.getZoomLevel();
+
+    function calculateDeltas(
+      nodeBounds: Box,
+      viewportPageBounds: Box,
+      zoomLevel: number
+    ) {
+      let deltaX = 0;
+      let deltaY = 0;
+      const PADDING = 64 / zoomLevel;
+
+      if (nodeBounds.x < viewportPageBounds.x) {
+        //left
+        deltaX = (viewportPageBounds.x - nodeBounds.x + PADDING) * zoomLevel;
+      } else if (
+        nodeBounds.x + nodeBounds.w >
+        viewportPageBounds.x + viewportPageBounds.w
+      ) {
+        //right
+        deltaX =
+          (viewportPageBounds.x +
+            viewportPageBounds.w -
+            (nodeBounds.x + nodeBounds.w) -
+            PADDING) *
+          zoomLevel;
+      }
+
+      if (nodeBounds.y < viewportPageBounds.y) {
+        //up
+        deltaY = (viewportPageBounds.y - nodeBounds.y + PADDING) * zoomLevel;
+      } else if (
+        nodeBounds.y + nodeBounds.h >
+        viewportPageBounds.y + viewportPageBounds.h
+      ) {
+        //down
+        deltaY =
+          (viewportPageBounds.y +
+            viewportPageBounds.h -
+            (nodeBounds.y + nodeBounds.h) -
+            PADDING) *
+          zoomLevel;
+      }
+      return new Vec(deltaX, deltaY);
+    }
     if (!nodeBounds || !viewportPageBounds) return;
     if (viewportPageBounds.contains(nodeBounds)) return;
-    // Does the shape fit in the viewport? If not animate to shape
+    // Does the shape fit in the viewport + padding?
     if (
       nodeBounds.h > viewportPageBounds.h ||
       nodeBounds.w > viewportPageBounds.w
     ) {
+      // calculate zoom needed to fit node into the viewport
+      // scale viewport box accordingly
+      // calculateDeltas() with new viewport
+      // editor.setCamera with new zoom and bounds
       return this.editor.animateToShape(node.id, animationOptions);
     }
-    // pan the minimum amount needed to put the shape in bounds
-    let deltaX = 0;
-    let deltaY = 0;
-    const zoomLevel = this.editor.getZoomLevel();
-    // most zoomed out camera is 0.1, most zoomed in is 8
-    // the more zoomed out the camera is, the bigger I want the padding
-
-    const PADDING = 200 / zoomLevel;
-
-    if (nodeBounds.x < viewportPageBounds.x) {
-      //left
-      deltaX = (viewportPageBounds.x - nodeBounds.x + PADDING) * zoomLevel;
-    } else if (
-      nodeBounds.x + nodeBounds.w >
-      viewportPageBounds.x + viewportPageBounds.w
-    ) {
-      //right
-      deltaX =
-        (viewportPageBounds.x +
-          viewportPageBounds.w -
-          (nodeBounds.x + nodeBounds.width) -
-          PADDING) *
-        zoomLevel;
-    }
-
-    if (nodeBounds.y < viewportPageBounds.y) {
-      //up
-      deltaY = (viewportPageBounds.y - nodeBounds.y + PADDING) * zoomLevel;
-    } else if (
-      nodeBounds.y + nodeBounds.height >
-      viewportPageBounds.y + viewportPageBounds.h
-    ) {
-      //down
-      deltaY =
-        (viewportPageBounds.y +
-          viewportPageBounds.h -
-          (nodeBounds.y + nodeBounds.height) -
-          PADDING) *
-        zoomLevel;
-    }
-    console.log({ deltaX, deltaY });
-    this.editor.pan(new Vec(deltaX, deltaY), animationOptions);
+    const deltas = calculateDeltas(nodeBounds, viewportPageBounds, zoomLevel);
+    this.editor.stopCameraAnimation();
+    this.editor.pan(deltas, animationOptions);
   }
 
   override onInterrupt: TLInterruptEvent = () => {
