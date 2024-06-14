@@ -8,8 +8,22 @@ import {
   TLShape,
   Vec,
   Box,
+  Editor,
+  intersectLineSegmentLineSegment,
+  TLShapeId,
 } from "tldraw";
 import { animationOptions, getNodes } from "../useNavigation";
+
+type NodePosition = {
+  id: string;
+  distance: number;
+};
+type NodePositions = {
+  up: NodePosition[];
+  down: NodePosition[];
+  left: NodePosition[];
+  right: NodePosition[];
+};
 
 export class FuzzyCursorTool extends StateNode {
   // [1]
@@ -17,6 +31,12 @@ export class FuzzyCursorTool extends StateNode {
 
   nodes: TLShape[] = [];
   focusedNode: Atom<TLShape> = atom("fuzzy cursor brush", {} as TLShape);
+  nodePositionsCached = this.editor.store.createComputedCache<
+    NodePositions,
+    TLShape
+  >("node positions infoCache", (shape) =>
+    generateNodePositions(shape, this.editor)
+  );
 
   override onEnter = () => {
     this.nodes = getNodes(this.editor);
@@ -29,8 +49,9 @@ export class FuzzyCursorTool extends StateNode {
         return { index: i, distance: point.dist(viewportCenter) };
       })
       .sort((a, b) => a.distance - b.distance);
-
+    // set the focused node to the closest node
     this.focusedNode.set(this.nodes[distances[0].index]);
+    this.nodePositionsCached.get(this.focusedNode.get().id);
     this.moveCameraIfNeeded();
   };
   override onExit = () => {
@@ -38,23 +59,44 @@ export class FuzzyCursorTool extends StateNode {
   };
 
   override onKeyDown: TLEventHandlers["onKeyDown"] = (info) => {
-    const currentIndex = this.nodes.indexOf(this.focusedNode.get());
     switch (info.code) {
       case "ArrowRight": {
-        let nextIndex = currentIndex + 1;
-        if (nextIndex > this.nodes.length - 1) {
-          nextIndex = 0;
-        }
-        this.focusedNode.set(this.nodes[nextIndex]);
+        const closestNode = this.nodePositionsCached.get(
+          this.focusedNode.get().id
+        )?.right[0];
+        if (!closestNode) return;
+        const shape = this.editor.getShape(closestNode.id as TLShapeId)!;
+        this.focusedNode.set(shape);
         this.moveCameraIfNeeded();
         break;
       }
       case "ArrowLeft": {
-        let prevIndex = currentIndex - 1;
-        if (prevIndex == -1) {
-          prevIndex = this.nodes.length - 1;
-        }
-        this.focusedNode.set(this.nodes[prevIndex]);
+        const closestNode = this.nodePositionsCached.get(
+          this.focusedNode.get().id
+        )?.left[0];
+        if (!closestNode) return;
+        const shape = this.editor.getShape(closestNode.id as TLShapeId)!;
+        this.focusedNode.set(shape);
+        this.moveCameraIfNeeded();
+        break;
+      }
+      case "ArrowUp": {
+        const closestNode = this.nodePositionsCached.get(
+          this.focusedNode.get().id
+        )?.up[0];
+        if (!closestNode) return;
+        const shape = this.editor.getShape(closestNode.id as TLShapeId)!;
+        this.focusedNode.set(shape);
+        this.moveCameraIfNeeded();
+        break;
+      }
+      case "ArrowDown": {
+        const closestNode = this.nodePositionsCached.get(
+          this.focusedNode.get().id
+        )?.down[0];
+        if (!closestNode) return;
+        const shape = this.editor.getShape(closestNode.id as TLShapeId)!;
+        this.focusedNode.set(shape);
         this.moveCameraIfNeeded();
         break;
       }
@@ -144,4 +186,65 @@ export class FuzzyCursorTool extends StateNode {
     this.parent.transition("select", {});
     this.nodes = [];
   }
+}
+
+function generateNodePositions(focusedNode: TLShape, editor: Editor) {
+  const nodes = getNodes(editor).filter((node) => node.id !== focusedNode.id);
+  const focusedNodeBounds = editor.getShapePageBounds(focusedNode);
+  if (!focusedNodeBounds) return;
+  const nodePositions: NodePositions = {
+    up: [],
+    down: [],
+    left: [],
+    right: [],
+  };
+
+  nodes.forEach((node) => {
+    const bounds = editor.getShapePageBounds(node);
+
+    if (!bounds) return;
+    const nodeCenter = bounds.center;
+    const corners = [
+      new Vec(bounds.x, bounds.y),
+      new Vec(bounds.x + bounds.w, bounds.y),
+      new Vec(bounds.w + bounds.x, bounds.y + bounds.h),
+      new Vec(bounds.x, bounds.y + bounds.h),
+    ];
+
+    const segments = [
+      [corners[0], corners[1]],
+      [corners[1], corners[2]],
+      [corners[2], corners[3]],
+      [corners[3], corners[0]],
+    ];
+    let intersectingSegment: number = 0;
+    for (let i = 0; i < segments.length; i++) {
+      const intersection = intersectLineSegmentLineSegment(
+        segments[i][0],
+        segments[i][1],
+        focusedNodeBounds.center,
+        nodeCenter
+      );
+      if (intersection) {
+        intersectingSegment = i;
+        break;
+      }
+    }
+
+    const direction =
+      intersectingSegment === 0
+        ? "down"
+        : intersectingSegment === 1
+        ? "left"
+        : intersectingSegment === 2
+        ? "up"
+        : "right";
+    const distance = nodeCenter.dist(focusedNodeBounds.center);
+    nodePositions[direction].push({ id: node.id, distance });
+  });
+  nodePositions.up.sort((a, b) => a.distance - b.distance);
+  nodePositions.down.sort((a, b) => a.distance - b.distance);
+  nodePositions.left.sort((a, b) => a.distance - b.distance);
+  nodePositions.right.sort((a, b) => a.distance - b.distance);
+  return nodePositions;
 }
