@@ -205,10 +205,13 @@ function generateNodePositions(focusedNode: TLShape, editor: Editor) {
     if (!bounds) return;
     const nodeCenter = bounds.center;
     const corners = [
-      new Vec(bounds.x, bounds.y),
-      new Vec(bounds.x + bounds.w, bounds.y),
-      new Vec(bounds.w + bounds.x, bounds.y + bounds.h),
-      new Vec(bounds.x, bounds.y + bounds.h),
+      new Vec(focusedNodeBounds.x, focusedNodeBounds.y),
+      new Vec(focusedNodeBounds.x + focusedNodeBounds.w, focusedNodeBounds.y),
+      new Vec(
+        focusedNodeBounds.w + focusedNodeBounds.x,
+        focusedNodeBounds.y + focusedNodeBounds.h
+      ),
+      new Vec(focusedNodeBounds.x, focusedNodeBounds.y + focusedNodeBounds.h),
     ];
 
     const segments = [
@@ -218,6 +221,7 @@ function generateNodePositions(focusedNode: TLShape, editor: Editor) {
       [corners[3], corners[0]],
     ];
     let intersectingSegment: number = 0;
+
     for (let i = 0; i < segments.length; i++) {
       const intersection = intersectLineSegmentLineSegment(
         segments[i][0],
@@ -231,14 +235,22 @@ function generateNodePositions(focusedNode: TLShape, editor: Editor) {
       }
     }
 
-    const direction =
-      intersectingSegment === 0
-        ? "down"
-        : intersectingSegment === 1
-        ? "left"
-        : intersectingSegment === 2
-        ? "up"
-        : "right";
+    let direction: keyof NodePositions = "up";
+    switch (intersectingSegment) {
+      case 0:
+        direction = "up";
+        break;
+      case 1:
+        direction = "right";
+        break;
+      case 2:
+        direction = "down";
+        break;
+      case 3:
+        direction = "left";
+        break;
+    }
+
     const distance = nodeCenter.dist(focusedNodeBounds.center);
     nodePositions[direction].push({ id: node.id, distance });
   });
@@ -246,5 +258,6 @@ function generateNodePositions(focusedNode: TLShape, editor: Editor) {
   nodePositions.down.sort((a, b) => a.distance - b.distance);
   nodePositions.left.sort((a, b) => a.distance - b.distance);
   nodePositions.right.sort((a, b) => a.distance - b.distance);
+  console.log(nodePositions);
   return nodePositions;
 }
