@@ -103,7 +103,15 @@ export class FuzzyCursorTool extends StateNode {
       case "Enter": {
         const bounds = this.editor.getShapePageBounds(this.focusedNode.get());
         if (!bounds) return;
-        this.editor.zoomToBounds(bounds, animationOptions);
+        const zoomLevel = this.editor.getZoomLevel();
+        const PADDING = 64 / zoomLevel;
+        const newBounds = new Box(
+          bounds.x - PADDING,
+          bounds.y - PADDING,
+          bounds.w + PADDING * 2,
+          bounds.h + PADDING * 2
+        );
+        return this.editor.zoomToBounds(newBounds, animationOptions);
       }
     }
   };
@@ -113,6 +121,7 @@ export class FuzzyCursorTool extends StateNode {
     const nodeBounds = this.editor.getShapePageBounds(node);
     const viewportPageBounds = this.editor.getViewportPageBounds();
     const zoomLevel = this.editor.getZoomLevel();
+    const PADDING = 64 / zoomLevel;
 
     function calculateDeltas(
       nodeBounds: Box,
@@ -121,7 +130,6 @@ export class FuzzyCursorTool extends StateNode {
     ) {
       let deltaX = 0;
       let deltaY = 0;
-      const PADDING = 64 / zoomLevel;
 
       if (nodeBounds.x < viewportPageBounds.x) {
         //left
@@ -160,14 +168,16 @@ export class FuzzyCursorTool extends StateNode {
     if (viewportPageBounds.contains(nodeBounds)) return;
     // Does the shape fit in the viewport + padding?
     if (
-      nodeBounds.h > viewportPageBounds.h ||
-      nodeBounds.w > viewportPageBounds.w
+      nodeBounds.h + PADDING * 2 > viewportPageBounds.h ||
+      nodeBounds.w + PADDING * 2 > viewportPageBounds.w
     ) {
-      // calculate zoom needed to fit node into the viewport
-      // scale viewport box accordingly
-      // calculateDeltas() with new viewport
-      // editor.setCamera with new zoom and bounds
-      return this.editor.animateToShape(node.id, animationOptions);
+      const newBounds = new Box(
+        nodeBounds.x - PADDING,
+        nodeBounds.y - PADDING,
+        nodeBounds.w + PADDING * 2,
+        nodeBounds.h + PADDING * 2
+      );
+      return this.editor.zoomToBounds(newBounds, animationOptions);
     }
     const deltas = calculateDeltas(nodeBounds, viewportPageBounds, zoomLevel);
     this.editor.stopCameraAnimation();
@@ -250,7 +260,6 @@ function generateNodePositions(focusedNode: TLShape, editor: Editor) {
         direction = "left";
         break;
     }
-
     const distance = nodeCenter.dist(focusedNodeBounds.center);
     nodePositions[direction].push({ id: node.id, distance });
   });
