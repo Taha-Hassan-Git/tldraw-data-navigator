@@ -35,13 +35,13 @@ export const FuzzyCursorBox = track(function FuzzyCursorBox() {
         height: fuzzyCursorBrush.h + PADDING,
         // border: "1px solid var(--color-text-0)",
         borderRadius: 8,
-        boxShadow: "0px 0px 10px 5px hsla(210, 100%, 50%, 0.2)",
+        boxShadow: "0px 0px 15px 10px hsla(210, 100%, 50%, 0.2)",
         zIndex: 999,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         color: "red",
-        // transition: "transform 0.1s ease-in-out",
+        // transition: "transform 0.05s ease-in-out",
       }}
     >
       <p>.</p>

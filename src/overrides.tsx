@@ -28,10 +28,20 @@ export const overrides: TLUiOverrides = {
             const center = editor.getShapePageBounds(node)?.center;
             if (!center) return;
             const point = editor.pageToViewport(center);
-            editor.zoomIn(new Vec(point.x, point.y), animationOptions);
+            editor.zoomIn(new Vec(point.x, point.y), {
+              animation: animationOptions,
+              force: true,
+              immediate: false,
+              reset: false,
+            });
             return;
           }
-          editor.zoomIn(undefined, animationOptions);
+          editor.zoomIn(undefined, {
+            animation: animationOptions,
+            force: true,
+            immediate: false,
+            reset: false,
+          });
         },
       },
       zoomOut: {
@@ -47,10 +57,20 @@ export const overrides: TLUiOverrides = {
             const center = editor.getShapePageBounds(node)?.center;
             if (!center) return;
             const point = editor.pageToViewport(center);
-            editor.zoomOut(new Vec(point.x, point.y), animationOptions);
+            editor.zoomOut(new Vec(point.x, point.y), {
+              animation: animationOptions,
+              force: true,
+              immediate: false,
+              reset: false,
+            });
             return;
           }
-          editor.zoomOut(undefined, animationOptions);
+          editor.zoomOut(undefined, {
+            animation: animationOptions,
+            force: true,
+            immediate: false,
+            reset: false,
+          });
         },
       },
     };

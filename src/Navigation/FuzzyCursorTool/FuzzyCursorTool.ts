@@ -11,6 +11,7 @@ import {
   Editor,
   intersectLineSegmentLineSegment,
   TLShapeId,
+  VecLike,
 } from "tldraw";
 import { animationOptions, getNodes } from "../useNavigation";
 
@@ -41,7 +42,7 @@ export class FuzzyCursorTool extends StateNode {
   override onEnter = () => {
     this.nodes = getNodes(this.editor);
     // calculate the node that is closest to the center of the viewport
-    const viewportCenter = this.editor.getViewportPageCenter();
+    const viewportCenter = this.editor.getViewportPageBounds().center;
     const distances = this.nodes
       .map((node, i) => {
         const bounds = this.editor.getShapePageBounds(node)!;
@@ -111,7 +112,11 @@ export class FuzzyCursorTool extends StateNode {
           bounds.w + PADDING * 2,
           bounds.h + PADDING * 2
         );
-        return this.editor.zoomToBounds(newBounds, animationOptions);
+        return this.editor.zoomToBounds(newBounds, {
+          animation: animationOptions,
+          immediate: false,
+          force: true,
+        });
       }
     }
   };
@@ -166,7 +171,7 @@ export class FuzzyCursorTool extends StateNode {
     }
     if (!nodeBounds || !viewportPageBounds) return;
     if (viewportPageBounds.contains(nodeBounds)) return;
-    // Does the shape fit in the viewport + padding?
+    // Does the shape fit in the viewport + padding? If not, zoom to fit
     if (
       nodeBounds.h + PADDING * 2 > viewportPageBounds.h ||
       nodeBounds.w + PADDING * 2 > viewportPageBounds.w
@@ -177,11 +182,16 @@ export class FuzzyCursorTool extends StateNode {
         nodeBounds.w + PADDING * 2,
         nodeBounds.h + PADDING * 2
       );
-      return this.editor.zoomToBounds(newBounds, animationOptions);
+      return this.editor.zoomToBounds(newBounds, {
+        animation: animationOptions,
+        immediate: false,
+        force: true,
+        reset: false,
+      });
     }
     const deltas = calculateDeltas(nodeBounds, viewportPageBounds, zoomLevel);
     this.editor.stopCameraAnimation();
-    this.editor.pan(deltas, animationOptions);
+    this.pan(deltas, animationOptions);
   }
 
   override onInterrupt: TLInterruptEvent = () => {
@@ -191,6 +201,22 @@ export class FuzzyCursorTool extends StateNode {
   override onCancel: TLCancelEvent = () => {
     this.complete();
   };
+  pan(offset: VecLike, options): this {
+    const { isLocked, panSpeed } = this.editor.getCameraOptions();
+    if (isLocked) return this;
+    const { x: cx, y: cy, z: cz } = this.editor.getCamera();
+    this.editor.setCamera(
+      new Vec(
+        cx + (offset.x * panSpeed) / cz,
+        cy + (offset.y * panSpeed) / cz,
+        cz
+      ),
+      {
+        animation: options,
+      }
+    );
+    return this;
+  }
 
   private complete() {
     this.parent.transition("select", {});

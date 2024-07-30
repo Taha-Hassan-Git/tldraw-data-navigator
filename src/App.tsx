@@ -1,18 +1,17 @@
 import { TLComponents, TLUiAssetUrlOverrides, Tldraw } from "tldraw";
-import snapshot from "./snapshot.json";
 import { CustomToolbar, overrides } from "./overrides";
 import { FuzzyCursorBox } from "./Navigation/FuzzyCursorBox";
 import { FuzzyCursorTool } from "./Navigation/FuzzyCursorTool/FuzzyCursorTool";
 
-export const customTools = [FuzzyCursorTool];
+const customTools = [FuzzyCursorTool];
 
-export const customAssetUrls: TLUiAssetUrlOverrides = {
+const customAssetUrls: TLUiAssetUrlOverrides = {
   icons: {
     "tool-fuzzyCursor": "/tool-fuzzyCursor.svg",
   },
 };
 
-export const customComponents: TLComponents = {
+const customComponents: TLComponents = {
   InFrontOfTheCanvas: FuzzyCursorBox,
   Toolbar: CustomToolbar,
 };
@@ -27,6 +26,7 @@ function App() {
         assetUrls={customAssetUrls}
         tools={customTools}
         onMount={(editor) => {
+          // eslint-disable-next-line
           (window as any).editor = editor;
         }}
       />
