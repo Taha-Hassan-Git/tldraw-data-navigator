@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "data-navigator": "^1.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tldraw": "^2.1.4"
+    "tldraw": "^2.1.4",
+    "data-navigator": "^1.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

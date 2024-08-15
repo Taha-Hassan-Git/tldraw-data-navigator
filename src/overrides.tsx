@@ -1,7 +1,7 @@
 import {
   DefaultToolbar,
   DefaultToolbarContent,
-  TLFrameShape,
+  TLShape,
   TLUiOverrides,
   TldrawUiMenuItem,
   Vec,
@@ -24,7 +24,7 @@ export const overrides: TLUiOverrides = {
           if (editor.isIn("fuzzy-cursor")) {
             // we want to keep the focused node in the viewport
             const fuzzyCursorTool = editor.getCurrentTool() as FuzzyCursorTool;
-            const node = fuzzyCursorTool.focusedNode.get() as TLFrameShape;
+            const node = fuzzyCursorTool.focusedNode.get() as TLShape;
             const center = editor.getShapePageBounds(node)?.center;
             if (!center) return;
             const point = editor.pageToViewport(center);
@@ -53,7 +53,7 @@ export const overrides: TLUiOverrides = {
           if (editor.isIn("fuzzy-cursor")) {
             // we want to keep the focused node in the viewport
             const fuzzyCursorTool = editor.getCurrentTool() as FuzzyCursorTool;
-            const node = fuzzyCursorTool.focusedNode.get() as TLFrameShape;
+            const node = fuzzyCursorTool.focusedNode.get() as TLShape;
             const center = editor.getShapePageBounds(node)?.center;
             if (!center) return;
             const point = editor.pageToViewport(center);

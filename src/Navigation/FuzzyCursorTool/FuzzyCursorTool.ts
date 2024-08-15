@@ -13,7 +13,8 @@ import {
   TLShapeId,
   VecLike,
 } from "tldraw";
-import { animationOptions, getNodes } from "../useNavigation";
+import { animationOptions, getNodes, navigationRules } from "../useNavigation";
+import { default as dataNavigator } from "data-navigator";
 
 type NodePosition = {
   id: string;
@@ -40,7 +41,24 @@ export class FuzzyCursorTool extends StateNode {
   );
 
   override onEnter = () => {
-    this.nodes = getNodes(this.editor);
+    const structure = getNodes(this.editor);
+    // what is happening here
+    const rendering = dataNavigator.rendering({
+      elementData: structure.nodes,
+      suffixId: "tldraw",
+      root: {
+        id: "root",
+        cssClass: "",
+        width: "100%",
+        height: "100%",
+      },
+    });
+    // todo: only initialise once
+    rendering.initialize();
+    const input = dataNavigator.input({
+      structure,
+      navigationRules,
+    });
     // calculate the node that is closest to the center of the viewport
     const viewportCenter = this.editor.getViewportPageBounds().center;
     const distances = this.nodes

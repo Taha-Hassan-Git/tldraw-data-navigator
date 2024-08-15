@@ -1,4 +1,4 @@
-import { Box, TLFrameShape, track, useEditor } from "tldraw";
+import { Box, track, useEditor } from "tldraw";
 import "tldraw/tldraw.css";
 import { FuzzyCursorTool } from "./FuzzyCursorTool/FuzzyCursorTool";
 
@@ -10,7 +10,7 @@ export const FuzzyCursorBox = track(function FuzzyCursorBox() {
     if (editor.getPath() !== "fuzzy-cursor") return null;
 
     const fuzzyCursorTool = editor.getCurrentTool() as FuzzyCursorTool;
-    const node = fuzzyCursorTool.focusedNode.get() as TLFrameShape;
+    const node = fuzzyCursorTool.focusedNode.get();
     const bounds = editor.getShapePageBounds(node);
     if (!bounds) return null;
     const zoomLevel = editor.getZoomLevel();
